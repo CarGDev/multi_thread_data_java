@@ -3,16 +3,17 @@ package ridesharing.location;
 import java.util.*;
 
 public class Location {
-  public int locationID;
+  private static final double EARTH_RADIUS_KM = 6371.0;
+
+  public final int locationID;
   public final double latitude;
   public final double longitude;
   public final String address;
-  private double earthRadisKM = 6371.0;
 
   private static final List<Location> locations = new ArrayList<>();
   private static final Object LOCK = new Object();
 
-  public Location(int id, double latitude, double longitude, String address) {
+  private Location(int id, double latitude, double longitude, String address) {
     this.locationID = id;
     this.latitude = latitude;
     this.longitude = longitude;
@@ -36,8 +37,20 @@ public class Location {
     return this.locationID;
   }
 
-  public boolean equals(Location destination) {
-    return this.latitude == destination.latitude && this.longitude == destination.longitude;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof Location other)) {
+      return false;
+    }
+    return latitude == other.latitude && longitude == other.longitude;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(latitude, longitude);
   }
 
   @Override
@@ -47,12 +60,10 @@ public class Location {
 
   public static Location getLocationById(int id) {
     synchronized (LOCK) {
-      for (int i = 0; i < locations.size(); i++) {
-        if (locations.get(i).getLocationID() == id) {
-          return locations.get(i);
-        }
+      if (id < 1 || id > locations.size()) {
+        return null;
       }
-      return null;
+      return locations.get(id - 1);
     }
   }
 
@@ -66,6 +77,6 @@ public class Location {
                 * Math.sin(dLon / 2)
                 * Math.sin(dLon / 2);
 
-    return this.earthRadisKM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 }

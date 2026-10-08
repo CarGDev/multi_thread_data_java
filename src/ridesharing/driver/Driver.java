@@ -13,10 +13,6 @@ public class Driver {
   private static final Map<Integer, Driver> availableDrivers = new HashMap<>();
   private static final Object LOCK = new Object();
 
-  private float latitude;
-  private float longitude;
-  private String address;
-
   public Driver(int driverID, String name, double latitude, double longitude, String address) {
     this.name = name;
     this.driverID = driverID;
@@ -28,15 +24,11 @@ public class Driver {
     }
   }
 
-  public void UpdateLocation(double latitude, double longitude, String address) {
+  public void updateLocation(double latitude, double longitude, String address) {
     Location loc = Location.create(latitude, longitude, address);
     synchronized (LOCK) {
       this.currentLocation = loc.locationID;
     }
-  }
-
-  public int getDriverID(int id) {
-    return this.driverID;
   }
 
   public static Driver acquireNearest(Location pickup) {
@@ -65,25 +57,37 @@ public class Driver {
     }
   }
 
-  public void completeRide() {
+  public boolean acceptRide() {
     synchronized (LOCK) {
-      if (this.status != DriverStatus.BUSY) {
-        this.status = DriverStatus.AVAILABLE;
-        availableDrivers.put(driverID, this);
+      if (this.status != DriverStatus.AVAILABLE) {
+        return false;
       }
+      this.status = DriverStatus.BUSY;
+      availableDrivers.remove(this.driverID);
+      return true;
     }
   }
 
+  /** Frees the driver where they currently are. */
+  public void completeRide() {
+    synchronized (LOCK) {
+      if (this.status != DriverStatus.BUSY) {
+        return;
+      }
+      this.status = DriverStatus.AVAILABLE;
+      availableDrivers.put(driverID, this);
+    }
+  }
+
+  /** Frees the driver and leaves them at the ride's destination. */
   public void completeRideAt(Location destination) {
     synchronized (LOCK) {
-      if (this.status == DriverStatus.BUSY) {
-        double lat = destination.latitude;
-        double lon = destination.longitude;
-        String address = destination.address;
-        Location loc = Location.create(lat, lon, address);
-        this.currentLocation = loc.locationID;
-        this.status = DriverStatus.AVAILABLE;
+      if (this.status != DriverStatus.BUSY) {
+        return;
       }
+      this.currentLocation = destination.locationID;
+      this.status = DriverStatus.AVAILABLE;
+      availableDrivers.put(driverID, this);
     }
   }
 
@@ -127,7 +131,7 @@ public class Driver {
     }
   }
 
-  public List<Driver> getAll() {
+  public static List<Driver> getAll() {
     synchronized (LOCK) {
       return new ArrayList<>(drivers);
     }
@@ -137,9 +141,5 @@ public class Driver {
     synchronized (LOCK) {
       return new ArrayList<>(availableDrivers.values());
     }
-  }
-
-  public boolean acceptRider() {
-    return false;
   }
 }
