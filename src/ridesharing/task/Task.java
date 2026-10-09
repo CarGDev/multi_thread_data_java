@@ -1,3 +1,11 @@
 package ridesharing.task;
 
-public class Task {}
+import ridesharing.result.Result;
+
+public interface Task {
+  Result process();
+
+  int getID();
+
+  TaskStatus getStatus();
+}
