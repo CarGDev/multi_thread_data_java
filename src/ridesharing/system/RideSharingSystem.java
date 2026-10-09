@@ -53,7 +53,7 @@ public class RideSharingSystem {
   public void submitTask(Task t) throws InterruptedException {
     try {
       taskQueue.enqueue(t);
-    } catch (RuntimeException | InterruptedException e) {
+    } catch (InterruptedException e) {
       logger.error(e.getMessage());
       throw e;
     }
@@ -80,7 +80,7 @@ public class RideSharingSystem {
     try {
       submitTasks(tasks);
     } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException(e);
     } finally {
       shutdown();
       awaitCompletion();

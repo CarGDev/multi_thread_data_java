@@ -2,9 +2,7 @@ package ridesharing.worker;
 
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import ridesharing.exception.ProcessingException;
-import ridesharing.exception.QueueException;
 import ridesharing.logger.Logger;
 import ridesharing.queue.TaskQueue;
 import ridesharing.result.Result;
@@ -40,7 +38,7 @@ public class Worker implements Runnable {
         Task t;
         try {
           t = taskQueue.dequeue();
-        } catch (QueueException | InterruptedException err) {
+        } catch (InterruptedException err) {
           return;
         }
         processTask(t);

@@ -151,7 +151,7 @@ public class ResultStore {
       }
       sb.append(csvField(fields[i]));
     }
-      return "";
+    return "";
   }
 
   public void writeToCSV(Path path) throws FileIOException {

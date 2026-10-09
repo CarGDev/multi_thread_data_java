@@ -1,12 +1,11 @@
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import javax.annotation.processing.FilerException;
 import ridesharing.exception.FileIOException;
 import ridesharing.simulation.Simulation;
 import ridesharing.system.RideSharingSystem;
 import ridesharing.task.Task;
-
-import javax.annotation.processing.FilerException;
 
 static final int WORKER_COUNT = 8;
 static final String RESULTS_FILE = "results.csv";
@@ -14,14 +13,14 @@ static final String RESULTS_FILE = "results.csv";
 void main() throws FileIOException {
   try {
     Simulation.loadDrivers();
-  } catch (RuntimeException | FilerException e) {
+  } catch (FilerException e) {
     throw new FileIOException("loading drivers: " + e.getMessage());
   }
 
   List<Task> tasks = null;
   try {
     tasks = Simulation.loadRides();
-  } catch (RuntimeException | FilerException e) {
+  } catch (FilerException e) {
     throw new FileIOException("loading rides: " + e.getMessage());
   }
 

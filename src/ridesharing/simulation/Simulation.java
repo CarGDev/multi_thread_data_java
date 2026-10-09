@@ -17,12 +17,12 @@ public class Simulation {
   private static final Path DRIVERS_FILE = Path.of("src/ridesharing/simulation/Drivers.csv");
   private static final Path RIDERS_FILE = Path.of("src/ridesharing/simulation/Riders.csv");
 
-  private static List<String[]> readRows(Path file, int columns) throws FileIOException, FilerException {
+  private static List<String[]> readRows(Path file, int columns) throws FilerException {
     List<String> lines;
     try {
       lines = Files.readAllLines(file);
     } catch (IOException e) {
-      throw new FileIOException(file + ": " + e.getMessage());
+      throw new FilerException(file + ": " + e.getMessage());
     }
     if (lines.size() < 2) {
       throw new FilerException(file + " there is not data rows");
@@ -79,6 +79,6 @@ public class Simulation {
       tasks.add(new RideRequest(id, r, r.getLocation(), destination));
     }
     System.out.printf("loaded %d riders%n", rows.size());
-      return tasks;
+    return tasks;
   }
 }
