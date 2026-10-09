@@ -3,6 +3,7 @@ package ridesharing.worker;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 import ridesharing.exception.ProcessingException;
+import ridesharing.exception.QueueException;
 import ridesharing.logger.Logger;
 import ridesharing.queue.TaskQueue;
 import ridesharing.result.Result;
@@ -38,7 +39,11 @@ public class Worker implements Runnable {
         Task t;
         try {
           t = taskQueue.dequeue();
+        } catch (QueueException err) {
+          logger.info("worker " + workerID + ": " + err.getRawMessage());
+          return;
         } catch (InterruptedException err) {
+          Thread.currentThread().interrupt();
           return;
         }
         processTask(t);
@@ -64,7 +69,10 @@ public class Worker implements Runnable {
       logger.logTaskError(workerID, t.getID(), res.getMessage());
 
     } catch (RuntimeException e) {
-      ProcessingException err = new ProcessingException(t.getID(), e.getMessage());
+      ProcessingException err =
+          e instanceof ProcessingException pe
+              ? pe
+              : new ProcessingException(t.getID(), String.valueOf(e.getMessage()));
       logger.logException(workerID, err);
 
       Result res = new Result(t.getID(), false, err.getRawMessage());

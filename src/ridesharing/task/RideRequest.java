@@ -2,7 +2,9 @@ package ridesharing.task;
 
 import java.util.concurrent.ThreadLocalRandom;
 import ridesharing.driver.Driver;
+import ridesharing.exception.ProcessingException;
 import ridesharing.location.Location;
+import ridesharing.logger.Logger;
 import ridesharing.result.Result;
 import ridesharing.rider.Rider;
 
@@ -16,14 +18,15 @@ public class RideRequest extends BaseTask implements Task {
   private final Rider rider;
   private final Location pickup;
   private final Location destination;
-  private BaseTask baseTask;
+  private final Logger logger;
 
-  public RideRequest(int taskID, Rider rider, Location pickup, Location destination) {
+  public RideRequest(
+      int taskID, Rider rider, Location pickup, Location destination, Logger logger) {
     this.rider = rider;
     this.pickup = pickup;
     this.destination = destination;
-    this.baseTask = new BaseTask();
-    this.baseTask.init(this.taskID);
+    this.logger = logger;
+    init(taskID);
   }
 
   private Result.RideInfo baseRideInfo() {
@@ -37,10 +40,11 @@ public class RideRequest extends BaseTask implements Task {
 
   @Override
   public Result process() {
-    baseTask.setStatus(TaskStatus.PROCESSING);
+    setStatus(TaskStatus.PROCESSING);
     Driver driver = findDriver();
     if (driver == null) {
       setStatus(TaskStatus.FAILED);
+      logger.warn("task " + taskID + ": " + NO_DRIVER_TEXT);
       Result result = new Result(taskID, false, NO_DRIVER_TEXT);
       result.setRide(baseRideInfo());
       return result;
@@ -73,7 +77,7 @@ public class RideRequest extends BaseTask implements Task {
     } catch (InterruptedException error) {
       Thread.currentThread().interrupt();
       setStatus(TaskStatus.FAILED);
-      return new Result(taskID, false, "interrupted");
+      throw new ProcessingException(taskID, "interrupted");
     } finally {
       driver.completeRideAt(destination);
     }

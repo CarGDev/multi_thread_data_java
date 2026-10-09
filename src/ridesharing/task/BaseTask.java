@@ -4,7 +4,7 @@ import java.time.Instant;
 
 public class BaseTask {
   protected int taskID;
-  protected TaskStatus status;
+  protected TaskStatus status = TaskStatus.PENDING;
   protected Instant createdAt;
   private final Object lock = new Object();
 
@@ -13,6 +13,7 @@ public class BaseTask {
   protected void init(int taskID) {
     synchronized (lock) {
       this.taskID = taskID;
+      this.status = TaskStatus.PENDING;
       this.createdAt = Instant.now();
     }
   }
@@ -22,7 +23,9 @@ public class BaseTask {
   }
 
   public TaskStatus getStatus() {
-    return status;
+    synchronized (lock) {
+      return status;
+    }
   }
 
   protected void setStatus(TaskStatus status) {

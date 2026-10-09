@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.processing.FilerException;
 import ridesharing.driver.Driver;
 import ridesharing.exception.FileIOException;
 import ridesharing.location.Location;
+import ridesharing.logger.Logger;
 import ridesharing.rider.Rider;
 import ridesharing.task.RideRequest;
 import ridesharing.task.Task;
@@ -17,15 +17,15 @@ public class Simulation {
   private static final Path DRIVERS_FILE = Path.of("src/ridesharing/simulation/Drivers.csv");
   private static final Path RIDERS_FILE = Path.of("src/ridesharing/simulation/Riders.csv");
 
-  private static List<String[]> readRows(Path file, int columns) throws FilerException {
+  private static List<String[]> readRows(Path file, int columns) throws FileIOException {
     List<String> lines;
     try {
       lines = Files.readAllLines(file);
     } catch (IOException e) {
-      throw new FilerException(file + ": " + e.getMessage());
+      throw new FileIOException(file + ": " + e.getMessage());
     }
     if (lines.size() < 2) {
-      throw new FilerException(file + " there is not data rows");
+      throw new FileIOException(file + " there is not data rows");
     }
 
     List<String[]> rows = new ArrayList<>();
@@ -46,11 +46,11 @@ public class Simulation {
       double val = Double.parseDouble(value);
       return val;
     } catch (NumberFormatException e) {
-      throw new FileIOException(name + " line " + ": bad " + field + " \"" + value + "\"");
+      throw new FileIOException(name + " line " + line + ": bad " + field + " \"" + value + "\"");
     }
   }
 
-  public static void loadDrivers() throws FilerException {
+  public static void loadDrivers(Logger logger) throws FileIOException {
     List<String[]> rows = readRows(DRIVERS_FILE, 5);
     for (int i = 0; i < rows.size(); i++) {
       int line = i + 2;
@@ -60,11 +60,11 @@ public class Simulation {
       double lon = parseFloat(DRIVERS_FILE.toString(), line, "longitude", row[3]);
       new Driver(id, row[1], lat, lon, row[4]);
     }
-    System.out.printf("loaded %d drivers%n", rows.size());
+    logger.info("loaded " + rows.size() + " drivers");
   }
 
-  public static List<Task> loadRides() throws FilerException {
-    List<String[]> rows = readRows(RIDERS_FILE, 5);
+  public static List<Task> loadRides(Logger logger) throws FileIOException {
+    List<String[]> rows = readRows(RIDERS_FILE, 8);
     List<Task> tasks = new ArrayList<>(rows.size());
     for (int i = 0; i < rows.size(); i++) {
       int line = i + 2;
@@ -76,9 +76,9 @@ public class Simulation {
       double dest_lon = parseFloat(RIDERS_FILE.toString(), line, "destination_lon", row[6]);
       Rider r = new Rider(id, row[1], lat, lon, row[4]);
       Location destination = Location.create(dest_lat, dest_lon, row[7]);
-      tasks.add(new RideRequest(id, r, r.getLocation(), destination));
+      tasks.add(new RideRequest(id, r, r.getLocation(), destination, logger));
     }
-    System.out.printf("loaded %d riders%n", rows.size());
+    logger.info("loaded " + rows.size() + " riders / ride requests");
     return tasks;
   }
 }

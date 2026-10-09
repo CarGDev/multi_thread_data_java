@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import ridesharing.exception.FileIOException;
 import ridesharing.location.Location;
+import ridesharing.logger.Logger;
 
 public class ResultStore {
   private static final String[] CSV_HEADER = {
@@ -48,7 +49,17 @@ public class ResultStore {
   private static final DateTimeFormatter TIME_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC);
 
-  public void addResult(Result r) {}
+  private final Logger logger;
+
+  public ResultStore(Logger logger) {
+    this.logger = logger;
+  }
+
+  public void addResult(Result r) {
+    synchronized (lock) {
+      results.add(r);
+    }
+  }
 
   public List<Result> getResults() {
     synchronized (lock) {
@@ -151,7 +162,7 @@ public class ResultStore {
       }
       sb.append(csvField(fields[i]));
     }
-    return "";
+    return sb.toString();
   }
 
   public void writeToCSV(Path path) throws FileIOException {
@@ -166,5 +177,6 @@ public class ResultStore {
     } catch (IOException e) {
       throw new FileIOException("writing " + path + ": " + e.getMessage());
     }
+    logger.info("wrote " + snapshot.size() + " result(s) to " + path);
   }
 }
